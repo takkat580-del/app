@@ -2,61 +2,1333 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>スマホへのインストールガイド</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ScheBudge - スケジュール・家計簿・メモ</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Inter', 'Noto Sans JP', sans-serif; }
+        body {
+            font-family: 'Inter', 'Noto Sans JP', sans-serif;
+            background-color: #0f172a;
+            overscroll-behavior-y: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        /* カスタムスクロールバー非表示 */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        /* ネイティブ風プッシュ通知アニメーション */
+        @keyframes slideDown {
+            from { transform: translate(-50%, -130%); opacity: 0; }
+            to { transform: translate(-50%, 0); opacity: 1; }
+        }
+        .toast-enter {
+            animation: slideDown 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
     </style>
 </head>
-<body class="bg-slate-900 text-slate-100 min-h-screen py-8 px-4 flex justify-center items-center">
-    <div class="w-full max-w-lg bg-slate-800 border border-slate-700 rounded-3xl p-6 shadow-2xl space-y-6">
-        
-        <div class="text-center space-y-2">
-            <div class="w-14 h-14 bg-indigo-600 rounded-2xl mx-auto flex items-center justify-center text-2xl shadow-lg shadow-indigo-500/30">
-                <i class="fa-solid fa-mobile-screen-button text-white"></i>
+<body class="flex justify-center items-start min-h-screen text-slate-800 select-none">
+
+    <!-- スマホネイティブアプリ枠コンテナ -->
+    <div class="w-full max-w-md bg-slate-50 min-h-screen sm:min-h-[844px] sm:h-[92vh] sm:my-auto sm:rounded-[40px] sm:shadow-2xl sm:border-[8px] sm:border-slate-800 flex flex-col relative overflow-hidden">
+
+        <!-- ステータスバー風領域 (ネイティブ感演出) -->
+        <div class="bg-white px-6 pt-2 pb-1 flex items-center justify-between text-[11px] font-semibold text-slate-500 shrink-0">
+            <span>9:41</span>
+            <div class="flex items-center gap-1.5">
+                <i class="fa-solid fa-signal text-[10px]"></i>
+                <i class="fa-solid fa-wifi text-[10px]"></i>
+                <i class="fa-solid fa-battery-full text-xs"></i>
             </div>
-            <h1 class="text-xl font-bold tracking-tight">スマホのホーム画面に追加する方法</h1>
-            <p class="text-xs text-slate-400">専用アプリのようにアイコンから一発で起動できるようになります</p>
         </div>
 
-        <!-- iOS (iPhone) の場合 -->
-        <div class="bg-slate-900/60 border border-slate-700/80 rounded-2xl p-4 space-y-3">
-            <div class="flex items-center gap-2 text-indigo-400 font-bold text-sm">
-                <i class="fa-brands fa-apple text-lg"></i>
-                <span>iPhone (Safari) の場合</span>
+        <!-- ローカルプッシュ通知バナー (リマインダー発火時) -->
+        <div id="reminder-toast" class="fixed sm:absolute top-4 left-1/2 -translate-x-1/2 w-[92%] max-w-[380px] bg-slate-900/95 backdrop-blur-md text-white p-4 rounded-2xl shadow-2xl z-50 hidden border border-slate-700">
+            <div class="flex items-start gap-3">
+                <div id="toast-color-icon" class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 mt-0.5" style="background-color: #3b82f6;">
+                    <i class="fa-solid fa-bell text-white text-lg animate-bounce"></i>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <div class="flex items-center justify-between">
+                        <span class="text-[10px] font-bold uppercase tracking-wider text-amber-400">ローカル通知 • リマインダー</span>
+                        <span id="toast-time" class="text-xs text-slate-400">たった今</span>
+                    </div>
+                    <h4 id="toast-title" class="font-bold text-sm truncate mt-0.5">予定のタイトル</h4>
+                    <p id="toast-desc" class="text-xs text-slate-300 mt-0.5 truncate">14:00 開始</p>
+                </div>
+                <button onclick="closeToast()" class="text-slate-400 hover:text-white p-1">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
             </div>
-            <ol class="text-xs text-slate-300 space-y-2.5 list-decimal list-inside leading-relaxed">
-                <li>iPhoneの <span class="text-white font-semibold">Safari</span> でこのアプリのプレビュー画面を開く。</li>
-                <li>画面下部（または上部）にある <span class="bg-slate-700 px-2 py-0.5 rounded text-white font-semibold"><i class="fa-solid fa-arrow-up-from-bracket"></i> 共有ボタン</span> をタップ。</li>
-                <li>メニューを下にスクロールし、<span class="text-white font-semibold"><i class="fa-regular fa-square-plus"></i> ホーム画面に追加</span> を選択。</li>
-                <li>右上の <span class="text-indigo-400 font-semibold">追加</span> をタップすると、ホーム画面にアプリのアイコンが作成されます。</li>
-            </ol>
         </div>
 
-        <!-- Android (Chrome) の場合 -->
-        <div class="bg-slate-900/60 border border-slate-700/80 rounded-2xl p-4 space-y-3">
-            <div class="flex items-center gap-2 text-emerald-400 font-bold text-sm">
-                <i class="fa-brands fa-android text-lg"></i>
-                <span>Android (Chrome) の場合</span>
+        <!-- アプリヘッダー -->
+        <header class="bg-white px-5 pt-2 pb-3 border-b border-slate-100 flex items-center justify-between shrink-0 z-10">
+            <div>
+                <p id="header-subtitle" class="text-[11px] font-semibold text-indigo-600">2026年 10月</p>
+                <h1 id="header-title" class="text-xl font-bold text-slate-800 tracking-tight">スケジュール</h1>
             </div>
-            <ol class="text-xs text-slate-300 space-y-2.5 list-decimal list-inside leading-relaxed">
-                <li>Androidの <span class="text-white font-semibold">Google Chrome</span> でこのページを開く。</li>
-                <li>画面右上（またはメニュー）にある <span class="bg-slate-700 px-2 py-0.5 rounded text-white font-semibold"><i class="fa-solid fa-ellipsis-vertical"></i> メニューアイコン</span> をタップ。</li>
-                <li>メニュー内にある <span class="text-white font-semibold"><i class="fa-solid fa-mobile-screen"></i> ホーム画面に追加</span> または <span class="text-white font-semibold">アプリをインストール</span> を選択。</li>
-                <li>画面の指示に従って確認を押すと、ホーム画面にアイコンが追加されます。</li>
-            </ol>
+            <div class="flex items-center gap-2">
+                <!-- リマインダー通知テストボタン -->
+                <button onclick="triggerTestReminder()" class="px-3 py-1.5 rounded-full bg-amber-50 text-amber-600 hover:bg-amber-100 text-xs font-semibold flex items-center gap-1.5 transition active:scale-95" title="通知の動作テスト">
+                    <i class="fa-solid fa-bell"></i>
+                    <span>通知テスト</span>
+                </button>
+                <!-- 今日へ戻るボタン -->
+                <button onclick="jumpToToday()" class="px-3 py-1.5 rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200 text-xs font-bold transition active:scale-95">
+                    今日
+                </button>
+            </div>
+        </header>
+
+        <!-- メインコンテンツ領域 -->
+        <main class="flex-1 overflow-y-auto no-scrollbar pb-24">
+
+            <!-- ==================== タブ1: スケジュール (自由色分け＆リマインダー) ==================== -->
+            <section id="view-calendar" class="space-y-4">
+                <div class="bg-white px-4 py-3 shadow-xs">
+                    <!-- 月切り替え -->
+                    <div class="flex items-center justify-between mb-2 px-1">
+                        <button onclick="changeMonth(-1)" class="w-8 h-8 rounded-full hover:bg-slate-100 flex items-center justify-center text-slate-600 active:scale-90 transition">
+                            <i class="fa-solid fa-chevron-left text-sm"></i>
+                        </button>
+                        <h2 id="calendar-month-label" class="text-base font-bold text-slate-800">2026年 10月</h2>
+                        <button onclick="changeMonth(1)" class="w-8 h-8 rounded-full hover:bg-slate-100 flex items-center justify-center text-slate-600 active:scale-90 transition">
+                            <i class="fa-solid fa-chevron-right text-sm"></i>
+                        </button>
+                    </div>
+
+                    <!-- 曜日ヘッダー -->
+                    <div class="grid grid-cols-7 text-center mt-2 mb-1">
+                        <span class="text-[11px] font-semibold text-rose-500">日</span>
+                        <span class="text-[11px] font-semibold text-slate-400">月</span>
+                        <span class="text-[11px] font-semibold text-slate-400">火</span>
+                        <span class="text-[11px] font-semibold text-slate-400">水</span>
+                        <span class="text-[11px] font-semibold text-slate-400">木</span>
+                        <span class="text-[11px] font-semibold text-slate-400">金</span>
+                        <span class="text-[11px] font-semibold text-blue-500">土</span>
+                    </div>
+
+                    <!-- カレンダーグリッド -->
+                    <div id="calendar-grid" class="grid grid-cols-7 gap-1 text-center">
+                        <!-- JSで動的生成 -->
+                    </div>
+                </div>
+
+                <!-- 選択日のスケジュール一覧 -->
+                <div class="px-4">
+                    <div class="flex items-center justify-between mb-2.5 px-1">
+                        <div class="flex items-center gap-2">
+                            <h3 id="selected-date-label" class="font-bold text-slate-800 text-sm">10月25日 (日) の予定</h3>
+                            <span id="selected-date-count" class="text-xs bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded-full font-bold">0件</span>
+                        </div>
+                        <button onclick="openEventModal()" class="text-xs font-bold text-indigo-600 hover:text-indigo-700 flex items-center gap-1">
+                            <i class="fa-solid fa-plus"></i> 予定追加
+                        </button>
+                    </div>
+
+                    <div id="day-events-list" class="space-y-2.5">
+                        <!-- JSで動的生成 -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- ==================== タブ2: 独立した家計簿 (使った時に記録) ==================== -->
+            <section id="view-finance" class="hidden px-4 pt-4 space-y-4">
+                <!-- 月切り替え＆実績サマリーカード -->
+                <div class="bg-gradient-to-br from-slate-900 to-slate-800 text-white p-5 rounded-3xl shadow-lg">
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="flex items-center gap-2">
+                            <button onclick="changeMonth(-1)" class="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center text-xs hover:bg-white/20">
+                                <i class="fa-solid fa-chevron-left"></i>
+                            </button>
+                            <span id="finance-month-title" class="text-xs text-slate-200 font-semibold">2026年 10月の家計簿</span>
+                            <button onclick="changeMonth(1)" class="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center text-xs hover:bg-white/20">
+                                <i class="fa-solid fa-chevron-right"></i>
+                            </button>
+                        </div>
+                        <span class="text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 px-2.5 py-0.5 rounded-full font-semibold">実績ベース</span>
+                    </div>
+
+                    <div class="mt-2">
+                        <span class="text-[11px] text-slate-400 block">今月の収支残高</span>
+                        <div id="finance-total-balance" class="text-3xl font-bold tracking-tight mt-0.5">¥0</div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3 mt-4 pt-3 border-t border-white/10">
+                        <div class="bg-white/5 p-3 rounded-2xl">
+                            <div class="flex items-center gap-1.5 text-rose-400 text-xs mb-1">
+                                <i class="fa-solid fa-receipt"></i>
+                                <span>使った金額 (支出)</span>
+                            </div>
+                            <p id="finance-total-expense" class="text-base font-bold">-¥0</p>
+                        </div>
+                        <div class="bg-white/5 p-3 rounded-2xl">
+                            <div class="flex items-center gap-1.5 text-emerald-400 text-xs mb-1">
+                                <i class="fa-solid fa-wallet"></i>
+                                <span>入った金額 (収入)</span>
+                            </div>
+                            <p id="finance-total-income" class="text-base font-bold">+¥0</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 費目別の支出グラフ -->
+                <div class="bg-white p-4 rounded-3xl shadow-xs border border-slate-100">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                            <i class="fa-solid fa-chart-pie text-indigo-500"></i>
+                            <span>費目別の支出内訳</span>
+                        </h3>
+                    </div>
+                    <div id="expense-color-bar" class="w-full h-3 bg-slate-100 rounded-full overflow-hidden flex mb-3">
+                        <!-- JSで生成 -->
+                    </div>
+                    <div id="expense-category-list" class="grid grid-cols-2 gap-2">
+                        <!-- JSで生成 -->
+                    </div>
+                </div>
+
+                <!-- 入出金履歴リスト -->
+                <div>
+                    <div class="flex items-center justify-between mb-2.5 px-1">
+                        <h3 class="text-sm font-bold text-slate-800">入出金の記録一覧</h3>
+                        <button onclick="openFinanceModal()" class="text-xs font-bold text-emerald-600 hover:text-emerald-700 flex items-center gap-1">
+                            <i class="fa-solid fa-plus"></i> 収支を記帳
+                        </button>
+                    </div>
+                    <div id="finance-transactions-list" class="space-y-2">
+                        <!-- JSで生成 -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- ==================== タブ3: メモ帳機能 (新規追加) ==================== -->
+            <section id="view-notes" class="hidden px-4 pt-4 space-y-4">
+                <!-- 検索バー＆新規作成ボタン -->
+                <div class="flex items-center gap-2">
+                    <div class="relative flex-1">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                        <input type="text" id="note-search" oninput="renderNotesView()" placeholder="メモを検索..." class="w-full bg-white border border-slate-200 rounded-2xl pl-9 pr-4 py-2.5 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <button onclick="openNoteModal()" class="px-3.5 py-2.5 rounded-2xl bg-indigo-600 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm hover:bg-indigo-700 shrink-0">
+                        <i class="fa-solid fa-pen"></i>
+                        <span>新規メモ</span>
+                    </button>
+                </div>
+
+                <!-- メモ一覧グリッド -->
+                <div id="notes-grid" class="grid grid-cols-2 gap-3">
+                    <!-- JSで動的生成 -->
+                </div>
+            </section>
+
+            <!-- ==================== タブ4: リマインダー管理 ==================== -->
+            <section id="view-reminders" class="hidden px-4 pt-4 space-y-4">
+                <div class="bg-amber-50 border border-amber-200/80 p-4 rounded-2xl flex items-start gap-3">
+                    <div class="w-9 h-9 rounded-xl bg-amber-500 text-white flex items-center justify-center shrink-0 mt-0.5">
+                        <i class="fa-solid fa-bell"></i>
+                    </div>
+                    <div class="text-xs text-amber-900 leading-relaxed">
+                        <p class="font-bold text-sm mb-0.5">リマインダー設定一覧</p>
+                        ネイティブアプリのローカルプッシュ通知を想定した一覧です。「テスト通知」を押すと実際の通知バナーとアラーム音を確認できます。
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between px-1">
+                    <h3 class="text-sm font-bold text-slate-800">通知オンのスケジュール</h3>
+                    <span id="reminder-active-count" class="text-xs font-semibold text-indigo-600 bg-indigo-50 px-2.5 py-0.5 rounded-full">0件</span>
+                </div>
+
+                <div id="reminders-list" class="space-y-2.5">
+                    <!-- JSで生成 -->
+                </div>
+            </section>
+
+        </main>
+
+        <!-- フローティング追加ボタン (現在のタブに応じて動作) -->
+        <button onclick="handleFabClick()" id="fab-button" class="fixed sm:absolute bottom-20 right-5 w-14 h-14 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white shadow-xl shadow-indigo-500/30 flex items-center justify-center text-xl transition transform active:scale-90 z-20">
+            <i class="fa-solid fa-plus"></i>
+        </button>
+
+        <!-- ボトムナビゲーションバー (4タブ) -->
+        <nav class="fixed sm:absolute bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-slate-200/80 px-3 py-2 grid grid-cols-4 items-center z-20">
+            <button onclick="switchTab('calendar')" id="tab-btn-calendar" class="flex flex-col items-center py-1 text-indigo-600 transition">
+                <i class="fa-solid fa-calendar-days text-lg mb-0.5"></i>
+                <span class="text-[10px] font-bold">カレンダー</span>
+            </button>
+            <button onclick="switchTab('finance')" id="tab-btn-finance" class="flex flex-col items-center py-1 text-slate-400 hover:text-slate-600 transition">
+                <i class="fa-solid fa-yen-sign text-lg mb-0.5"></i>
+                <span class="text-[10px] font-medium">家計簿</span>
+            </button>
+            <button onclick="switchTab('notes')" id="tab-btn-notes" class="flex flex-col items-center py-1 text-slate-400 hover:text-slate-600 transition">
+                <i class="fa-solid fa-note-sticky text-lg mb-0.5"></i>
+                <span class="text-[10px] font-medium">メモ</span>
+            </button>
+            <button onclick="switchTab('reminders')" id="tab-btn-reminders" class="flex flex-col items-center py-1 text-slate-400 hover:text-slate-600 transition relative">
+                <i class="fa-solid fa-bell text-lg mb-0.5"></i>
+                <span class="text-[10px] font-medium">リマインダー</span>
+                <span id="nav-reminder-badge" class="w-2 h-2 rounded-full bg-amber-500 absolute top-1 right-6 hidden"></span>
+            </button>
+        </nav>
+
+        <!-- ==================== モーダル1: スケジュール登録/編集 (自由色選び＆リマインダー) ==================== -->
+        <div id="event-modal" class="fixed sm:absolute inset-0 bg-slate-900/60 backdrop-blur-xs z-40 hidden flex items-end sm:items-center justify-center">
+            <div class="bg-white w-full sm:w-[92%] max-h-[90vh] rounded-t-3xl sm:rounded-3xl p-5 overflow-y-auto no-scrollbar shadow-2xl space-y-4">
+                <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                    <h3 id="event-modal-heading" class="text-base font-bold text-slate-800">新しいスケジュール</h3>
+                    <button onclick="closeEventModal()" class="w-8 h-8 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+
+                <form id="event-form" onsubmit="saveEvent(event)" class="space-y-4">
+                    <input type="hidden" id="ev-form-id">
+
+                    <div>
+                        <label class="text-xs font-bold text-slate-500 block mb-1">予定のタイトル <span class="text-rose-500">*</span></label>
+                        <input type="text" id="ev-form-title" required placeholder="例: 歯医者、プロジェクト会議、友人とランチ" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="text-xs font-bold text-slate-500 block mb-1">日付 <span class="text-rose-500">*</span></label>
+                            <input type="date" id="ev-form-date" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                        <div>
+                            <label class="text-xs font-bold text-slate-500 block mb-1">時間 <span class="text-rose-500">*</span></label>
+                            <input type="time" id="ev-form-time" required value="12:00" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                    </div>
+
+                    <!-- 自由な12色カラーピッカー -->
+                    <div>
+                        <div class="flex items-center justify-between mb-2">
+                            <label class="text-xs font-bold text-slate-500">スケジュールの色（自由選択）</label>
+                            <span id="selected-color-preview" class="text-[11px] font-bold px-2 py-0.5 rounded-full text-white" style="background-color: #3b82f6;">選択中</span>
+                        </div>
+                        <div id="free-color-picker" class="grid grid-cols-6 gap-2.5 bg-slate-50 p-3 rounded-2xl border border-slate-200/70 justify-items-center">
+                            <!-- JSで12色サークルボタン生成 -->
+                        </div>
+                    </div>
+
+                    <!-- リマインダー設定 -->
+                    <div class="bg-slate-50 p-3.5 rounded-2xl border border-slate-200/70">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <i class="fa-solid fa-bell text-amber-500"></i>
+                                <span class="text-xs font-bold text-slate-700">リマインダー通知</span>
+                            </div>
+                            <select id="ev-form-reminder" class="bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                <option value="none">通知なし</option>
+                                <option value="0">予定の開始時刻</option>
+                                <option value="5">5分前</option>
+                                <option value="10" selected>10分前</option>
+                                <option value="30">30分前</option>
+                                <option value="60">1時間前</option>
+                                <option value="1440">1日前 (前日)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- 予定に関する補足メモ -->
+                    <div>
+                        <label class="text-xs font-bold text-slate-500 block mb-1">場所・補足メモ</label>
+                        <textarea id="ev-form-memo" rows="2" placeholder="場所やURL、持ち物など" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+                    </div>
+
+                    <div class="flex gap-2 pt-2">
+                        <button type="button" id="btn-delete-event" onclick="deleteCurrentEvent()" class="hidden px-4 py-3 rounded-xl bg-rose-50 text-rose-600 font-bold text-sm hover:bg-rose-100 transition">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                        <button type="submit" class="flex-1 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm shadow-lg shadow-indigo-500/25 transition">
+                            予定を保存
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
 
-        <div class="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-3.5 flex items-start gap-3">
-            <i class="fa-solid fa-circle-info text-amber-400 text-sm mt-0.5"></i>
-            <p class="text-[11px] text-amber-200/90 leading-relaxed">
-                ※現在はWebプレビュー状態（プロトタイプ）です。スマートフォン専用の完全なネイティブアプリとしてストア公開（App Store / Google Play）を行う場合は、React NativeやFlutterなどのフレームワークを用いてビルド・ストア審査を行う形になります。
-            </p>
+        <!-- ==================== モーダル2: 独立した家計簿 記帳モーダル ==================== -->
+        <div id="finance-modal" class="fixed sm:absolute inset-0 bg-slate-900/60 backdrop-blur-xs z-40 hidden flex items-end sm:items-center justify-center">
+            <div class="bg-white w-full sm:w-[92%] max-h-[90vh] rounded-t-3xl sm:rounded-3xl p-5 overflow-y-auto no-scrollbar shadow-2xl space-y-4">
+                <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                    <h3 id="finance-modal-heading" class="text-base font-bold text-slate-800">収支を記帳する</h3>
+                    <button onclick="closeFinanceModal()" class="w-8 h-8 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+
+                <form id="finance-form" onsubmit="saveTransaction(event)" class="space-y-4">
+                    <input type="hidden" id="fin-form-id">
+
+                    <!-- 支出 / 収入 切り替えタブ -->
+                    <div class="grid grid-cols-2 bg-slate-100 p-1 rounded-2xl text-xs font-bold">
+                        <button type="button" onclick="setTransactionType('expense')" id="tx-type-expense" class="py-2 rounded-xl bg-white text-rose-600 shadow-xs transition">
+                            支出（使ったお金）
+                        </button>
+                        <button type="button" onclick="setTransactionType('income')" id="tx-type-income" class="py-2 rounded-xl text-slate-500 transition">
+                            収入（入ったお金）
+                        </button>
+                    </div>
+
+                    <!-- 金額入力 -->
+                    <div>
+                        <label class="text-xs font-bold text-slate-500 block mb-1">金額 <span class="text-rose-500">*</span></label>
+                        <div class="relative">
+                            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-lg font-bold text-slate-400">¥</span>
+                            <input type="number" id="fin-form-amount" required min="1" step="1" placeholder="0" class="w-full bg-slate-50 border border-slate-200 rounded-2xl pl-9 pr-4 py-3 text-xl font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                        </div>
+                    </div>
+
+                    <!-- 費目（カテゴリ）選択 -->
+                    <div>
+                        <label class="text-xs font-bold text-slate-500 block mb-2">費目カテゴリ</label>
+                        <div id="finance-category-picker" class="grid grid-cols-4 gap-2">
+                            <!-- JSで生成 -->
+                        </div>
+                    </div>
+
+                    <!-- 日付と内容 -->
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="text-xs font-bold text-slate-500 block mb-1">日付 <span class="text-rose-500">*</span></label>
+                            <input type="date" id="fin-form-date" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                        </div>
+                        <div>
+                            <label class="text-xs font-bold text-slate-500 block mb-1">内容・お店など</label>
+                            <input type="text" id="fin-form-title" placeholder="例: スーパー、カフェ" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                        </div>
+                    </div>
+
+                    <div class="flex gap-2 pt-2">
+                        <button type="button" id="btn-delete-finance" onclick="deleteCurrentTransaction()" class="hidden px-4 py-3 rounded-xl bg-rose-50 text-rose-600 font-bold text-sm hover:bg-rose-100 transition">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                        <button type="submit" class="flex-1 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm shadow-lg shadow-emerald-500/25 transition">
+                            家計簿に記録する
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- ==================== モーダル3: メモ作成/編集モーダル ==================== -->
+        <div id="note-modal" class="fixed sm:absolute inset-0 bg-slate-900/60 backdrop-blur-xs z-40 hidden flex items-end sm:items-center justify-center">
+            <div class="bg-white w-full sm:w-[92%] max-h-[90vh] rounded-t-3xl sm:rounded-3xl p-5 overflow-y-auto no-scrollbar shadow-2xl space-y-4">
+                <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                    <h3 id="note-modal-heading" class="text-base font-bold text-slate-800">メモの編集</h3>
+                    <button onclick="closeNoteModal()" class="w-8 h-8 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+
+                <form id="note-form" onsubmit="saveNote(event)" class="space-y-4">
+                    <input type="hidden" id="note-form-id">
+
+                    <div class="flex items-center justify-between gap-2">
+                        <input type="text" id="note-form-title" required placeholder="メモのタイトル..." class="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <button type="button" onclick="toggleNotePin()" id="note-pin-btn" class="px-3 py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-500 flex items-center gap-1">
+                            <i class="fa-solid fa-thumbtack"></i>
+                            <span>ピン留め</span>
+                        </button>
+                    </div>
+
+                    <div>
+                        <textarea id="note-form-content" rows="6" required placeholder="買い物リストやアイデア、メモを自由に記入..." class="w-full bg-slate-50 border border-slate-200 rounded-2xl p-3.5 text-xs leading-relaxed focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+                    </div>
+
+                    <!-- メモの背景カラー選択 -->
+                    <div>
+                        <label class="text-xs font-bold text-slate-500 block mb-2">カードの背景色</label>
+                        <div id="note-color-picker" class="flex items-center gap-2.5">
+                            <!-- JSで生成 -->
+                        </div>
+                    </div>
+
+                    <div class="flex gap-2 pt-2">
+                        <button type="button" id="btn-delete-note" onclick="deleteCurrentNote()" class="hidden px-4 py-3 rounded-xl bg-rose-50 text-rose-600 font-bold text-sm hover:bg-rose-100 transition">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                        <button type="submit" class="flex-1 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm shadow-lg shadow-indigo-500/25 transition">
+                            メモを保存
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
 
     </div>
+
+    <script>
+        // --- 1. スケジュール用 自由選択カラーパレット（12色） ---
+        const FREE_COLORS = [
+            { hex: '#ef4444', name: 'レッド' },
+            { hex: '#f97316', name: 'オレンジ' },
+            { hex: '#f59e0b', name: 'アンバー' },
+            { hex: '#10b981', name: 'エメラルド' },
+            { hex: '#14b8a6', name: 'ティール' },
+            { hex: '#06b6d4', name: 'シアン' },
+            { hex: '#3b82f6', name: 'ブルー' },
+            { hex: '#6366f1', name: 'インディゴ' },
+            { hex: '#8b5cf6', name: 'バイオレット' },
+            { hex: '#d946ef', name: 'フューシャ' },
+            { hex: '#ec4899', name: 'ピンク' },
+            { hex: '#64748b', name: 'スレート' }
+        ];
+
+        // --- 2. 独立した家計簿用の費目カテゴリ ---
+        const FINANCE_CATEGORIES = {
+            expense: [
+                { id: 'food',    name: '食費',     icon: 'fa-utensils',      color: '#f43f5e' },
+                { id: 'daily',   name: '日用品',   icon: 'fa-cart-shopping', color: '#f59e0b' },
+                { id: 'transit', name: '交通費',   icon: 'fa-train-subway',  color: '#3b82f6' },
+                { id: 'social',  name: '交際費',   icon: 'fa-champagne-glasses', color: '#ec4899' },
+                { id: 'hobby',   name: '趣味・娯楽', icon: 'fa-gamepad',     color: '#8b5cf6' },
+                { id: 'fixed',   name: '固定費',   icon: 'fa-house',         color: '#6366f1' },
+                { id: 'medical', name: '医療・美容', icon: 'fa-heart-pulse', color: '#14b8a6' },
+                { id: 'other',   name: 'その他',   icon: 'fa-ellipsis',      color: '#64748b' }
+            ],
+            income: [
+                { id: 'salary',  name: '給与',     icon: 'fa-building-columns', color: '#10b981' },
+                { id: 'bonus',   name: '賞与・臨時', icon: 'fa-sack-dollar', color: '#059669' },
+                { id: 'side',    name: '副業・フリマ', icon: 'fa-laptop',    color: '#0d9488' },
+                { id: 'other_in',name: 'その他収入', icon: 'fa-coins',       color: '#64748b' }
+            ]
+        };
+
+        // --- 3. メモ帳の背景テーマカラー ---
+        const NOTE_THEMES = [
+            { id: 'white',  bg: 'bg-white',      border: 'border-slate-200', dot: '#ffffff' },
+            { id: 'amber',  bg: 'bg-amber-50',   border: 'border-amber-200', dot: '#fef3c7' },
+            { id: 'rose',   bg: 'bg-rose-50',    border: 'border-rose-200',  dot: '#ffe4e6' },
+            { id: 'emerald',bg: 'bg-emerald-50', border: 'border-emerald-200',dot: '#d1fae5' },
+            { id: 'blue',   bg: 'bg-blue-50',    border: 'border-blue-200',  dot: '#dbeafe' },
+            { id: 'purple', bg: 'bg-purple-50',  border: 'border-purple-200',dot: '#f3e8ff' }
+        ];
+
+        const REMINDER_LABELS = {
+            'none': '通知なし',
+            '0': '開始時刻',
+            '5': '5分前',
+            '10': '10分前',
+            '30': '30分前',
+            '60': '1時間前',
+            '1440': '1日前'
+        };
+
+        // --- アプリの状態 ---
+        let currentTab = 'calendar';
+        let currentYear = 2026;
+        let currentMonth = 9; // 0-indexed (9 = 10月)
+        let selectedDateStr = '2026-10-25';
+
+        // モーダル選択用の一時状態
+        let selectedEventColor = '#3b82f6';
+        let selectedTxType = 'expense';
+        let selectedTxCategory = 'food';
+        let selectedNoteTheme = 'amber';
+        let isNotePinned = false;
+
+        // --- 初期サンプルデータ (1: スケジュール、2: 独立家計簿、3: メモ) ---
+        let events = [
+            { id: 'ev-1', title: 'プロジェクト定例ミーティング', date: '2026-10-25', time: '10:30', color: '#3b82f6', reminder: '10', memo: 'Zoomリンクを確認すること' },
+            { id: 'ev-2', title: '美容室カット＆カラー', date: '2026-10-25', time: '14:00', color: '#ec4899', reminder: '60', memo: '担当：佐藤さん' },
+            { id: 'ev-3', title: 'ジムでパーソナルトレーニング', date: '2026-10-25', time: '18:30', color: '#10b981', reminder: '30', memo: 'ウェアとシューズ持参' },
+            { id: 'ev-4', title: '歯科検診・クリーニング', date: '2026-10-27', time: '11:00', color: '#06b6d4', reminder: '1440', memo: '診察券を忘れない' },
+            { id: 'ev-5', title: 'ハロウィンパーティー', date: '2026-10-31', time: '19:00', color: '#f97316', reminder: '60', memo: '渋谷のレンタルスペース' }
+        ];
+
+        let transactions = [
+            { id: 'tx-1', type: 'income',  category: 'salary',  amount: 295000, date: '2026-10-23', title: '10月分給与' },
+            { id: 'tx-2', type: 'expense', category: 'fixed',   amount: 68000,  date: '2026-10-24', title: '家賃・管理費' },
+            { id: 'tx-3', type: 'expense', category: 'food',    amount: 1480,   date: '2026-10-25', title: 'カフェでパスタランチ' },
+            { id: 'tx-4', type: 'expense', category: 'daily',   amount: 3250,   date: '2026-10-25', title: 'ドラッグストア（洗剤・日用品）' },
+            { id: 'tx-5', type: 'expense', category: 'transit', amount: 3000,   date: '2026-10-25', title: '交通系ICチャージ' }
+        ];
+
+        let notes = [
+            { id: 'nt-1', title: '週末の買い物リスト', content: '・コーヒー豆（深煎り）\n・オリーブオイル\n・牛乳、卵、ヨーグルト\n・単3電池パック', theme: 'amber', pinned: true, updatedAt: '2026/10/25' },
+            { id: 'nt-2', title: 'アプリのアイデアメモ', content: '・スワイプで月を切り替えられると便利\n・ダークモードの配色パターン検討\n・ウィジェット対応', theme: 'blue', pinned: true, updatedAt: '2026/10/24' },
+            { id: 'nt-3', title: '読みたい本リスト', content: '1. デザインシステム実践入門\n2. 行動経済学が最強の学問である', theme: 'emerald', pinned: false, updatedAt: '2026/10/20' }
+        ];
+
+        // --- 初期化 ---
+        window.onload = function() {
+            renderAll();
+            startReminderWatcher();
+        };
+
+        function formatYen(num) {
+            return '¥' + Number(num || 0).toLocaleString('ja-JP');
+        }
+
+        function renderAll() {
+            renderCalendar();
+            renderSelectedDayEvents();
+            renderFinanceView();
+            renderNotesView();
+            renderRemindersView();
+        }
+
+        // ==================== タブ1: カレンダー＆スケジュール ====================
+        function renderCalendar() {
+            const monthLabel = `${currentYear}年 ${currentMonth + 1}月`;
+            document.getElementById('calendar-month-label').textContent = monthLabel;
+            document.getElementById('header-subtitle').textContent = monthLabel;
+
+            const grid = document.getElementById('calendar-grid');
+            grid.innerHTML = '';
+
+            const firstDay = new Date(currentYear, currentMonth, 1).getDay();
+            const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+
+            for (let i = 0; i < firstDay; i++) {
+                const empty = document.createElement('div');
+                empty.className = 'h-12';
+                grid.appendChild(empty);
+            }
+
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                const dayEvents = events.filter(e => e.date === dateStr).sort((a, b) => a.time.localeCompare(b.time));
+                const isSelected = dateStr === selectedDateStr;
+                const isToday = dateStr === '2026-10-25';
+
+                const cell = document.createElement('button');
+                cell.type = 'button';
+                cell.onclick = () => {
+                    selectedDateStr = dateStr;
+                    renderCalendar();
+                    renderSelectedDayEvents();
+                };
+                cell.className = `h-12 rounded-2xl flex flex-col items-center justify-start pt-1.5 px-0.5 transition relative border ${
+                    isSelected
+                        ? 'bg-indigo-600 text-white border-indigo-600 shadow-md shadow-indigo-500/20'
+                        : isToday
+                        ? 'bg-indigo-50/80 text-indigo-700 border-indigo-200 font-bold'
+                        : 'bg-white hover:bg-slate-50 text-slate-700 border-transparent'
+                }`;
+
+                const numSpan = document.createElement('span');
+                numSpan.className = 'text-xs font-bold leading-none';
+                numSpan.textContent = day;
+                cell.appendChild(numSpan);
+
+                // 自由設定した色のドットを表示
+                const dotsWrap = document.createElement('div');
+                dotsWrap.className = 'flex items-center gap-1 mt-1.5 flex-wrap justify-center';
+                dayEvents.slice(0, 4).forEach(ev => {
+                    const dot = document.createElement('span');
+                    dot.className = `w-2 h-2 rounded-full ${isSelected ? 'ring-1 ring-white' : ''}`;
+                    dot.style.backgroundColor = ev.color || '#3b82f6';
+                    dotsWrap.appendChild(dot);
+                });
+                cell.appendChild(dotsWrap);
+
+                grid.appendChild(cell);
+            }
+        }
+
+        function renderSelectedDayEvents() {
+            const parts = selectedDateStr.split('-');
+            const dObj = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+            const weekdays = ['日', '月', '火', '水', '木', '金', '土'];
+            document.getElementById('selected-date-label').textContent = `${Number(parts[1])}月${Number(parts[2])}日 (${weekdays[dObj.getDay()]}) の予定`;
+
+            const dayEvents = events
+                .filter(e => e.date === selectedDateStr)
+                .sort((a, b) => a.time.localeCompare(b.time));
+
+            document.getElementById('selected-date-count').textContent = `${dayEvents.length}件`;
+
+            const listEl = document.getElementById('day-events-list');
+            listEl.innerHTML = '';
+
+            if (dayEvents.length === 0) {
+                listEl.innerHTML = `
+                    <div class="bg-white rounded-2xl p-6 text-center border border-dashed border-slate-200">
+                        <p class="text-xs text-slate-400 mb-2">この日のスケジュールはありません</p>
+                        <button onclick="openEventModal()" class="text-xs font-bold text-indigo-600 hover:underline">+ 新しい予定を追加する</button>
+                    </div>
+                `;
+                return;
+            }
+
+            dayEvents.forEach(ev => {
+                const card = document.createElement('div');
+                card.onclick = () => openEventModal(ev.id);
+                card.className = 'bg-white rounded-2xl p-3.5 shadow-xs border border-slate-100 flex items-center justify-between gap-3 cursor-pointer hover:bg-slate-50 transition active:scale-[0.99]';
+                card.style.borderLeft = `5px solid ${ev.color}`;
+
+                const reminderTag = ev.reminder && ev.reminder !== 'none'
+                    ? `<span class="inline-flex items-center gap-1 text-[10px] font-semibold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-md"><i class="fa-solid fa-bell"></i>${REMINDER_LABELS[ev.reminder]}</span>`
+                    : '';
+
+                card.innerHTML = `
+                    <div class="flex items-start gap-3 min-w-0 flex-1">
+                        <div class="text-center shrink-0 pt-0.5">
+                            <span class="text-xs font-bold text-slate-800 block">${ev.time}</span>
+                            <span class="inline-block w-2.5 h-2.5 rounded-full mt-1" style="background-color: ${ev.color}"></span>
+                        </div>
+                        <div class="min-w-0 flex-1">
+                            <div class="flex items-center gap-2">
+                                <h4 class="font-bold text-sm text-slate-800 truncate">${ev.title}</h4>
+                                ${reminderTag}
+                            </div>
+                            ${ev.memo ? `<p class="text-xs text-slate-400 truncate mt-1">${ev.memo}</p>` : ''}
+                        </div>
+                    </div>
+                    <i class="fa-solid fa-chevron-right text-slate-300 text-xs"></i>
+                `;
+                listEl.appendChild(card);
+            });
+        }
+
+        function renderFreeColorPicker() {
+            const container = document.getElementById('free-color-picker');
+            container.innerHTML = '';
+            FREE_COLORS.forEach(c => {
+                const isSel = c.hex.toLowerCase() === selectedEventColor.toLowerCase();
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.onclick = () => {
+                    selectedEventColor = c.hex;
+                    renderFreeColorPicker();
+                };
+                btn.className = `w-9 h-9 rounded-full flex items-center justify-center transition transform ${
+                    isSel ? 'scale-110 ring-2 ring-offset-2 ring-slate-800 shadow-md' : 'hover:scale-105 opacity-85 hover:opacity-100'
+                }`;
+                btn.style.backgroundColor = c.hex;
+                btn.innerHTML = isSel ? '<i class="fa-solid fa-check text-white text-xs"></i>' : '';
+                container.appendChild(btn);
+            });
+
+            const preview = document.getElementById('selected-color-preview');
+            const found = FREE_COLORS.find(c => c.hex.toLowerCase() === selectedEventColor.toLowerCase());
+            preview.style.backgroundColor = selectedEventColor;
+            preview.textContent = found ? found.name : 'カスタム色';
+        }
+
+        function openEventModal(editId = null) {
+            const modal = document.getElementById('event-modal');
+            const delBtn = document.getElementById('btn-delete-event');
+
+            if (editId) {
+                const ev = events.find(e => e.id === editId);
+                if (!ev) return;
+                document.getElementById('event-modal-heading').textContent = 'スケジュールの編集';
+                document.getElementById('ev-form-id').value = ev.id;
+                document.getElementById('ev-form-title').value = ev.title;
+                document.getElementById('ev-form-date').value = ev.date;
+                document.getElementById('ev-form-time').value = ev.time;
+                document.getElementById('ev-form-reminder').value = ev.reminder || 'none';
+                document.getElementById('ev-form-memo').value = ev.memo || '';
+                selectedEventColor = ev.color || '#3b82f6';
+                delBtn.classList.remove('hidden');
+            } else {
+                document.getElementById('event-modal-heading').textContent = '新しいスケジュール';
+                document.getElementById('ev-form-id').value = '';
+                document.getElementById('ev-form-title').value = '';
+                document.getElementById('ev-form-date').value = selectedDateStr;
+                document.getElementById('ev-form-time').value = '12:00';
+                document.getElementById('ev-form-reminder').value = '10';
+                document.getElementById('ev-form-memo').value = '';
+                selectedEventColor = '#3b82f6';
+                delBtn.classList.add('hidden');
+            }
+
+            renderFreeColorPicker();
+            modal.classList.remove('hidden');
+        }
+
+        function closeEventModal() {
+            document.getElementById('event-modal').classList.add('hidden');
+        }
+
+        function saveEvent(e) {
+            e.preventDefault();
+            const id = document.getElementById('ev-form-id').value;
+            const newEv = {
+                id: id || 'ev-' + Date.now(),
+                title: document.getElementById('ev-form-title').value.trim(),
+                date: document.getElementById('ev-form-date').value,
+                time: document.getElementById('ev-form-time').value,
+                color: selectedEventColor,
+                reminder: document.getElementById('ev-form-reminder').value,
+                memo: document.getElementById('ev-form-memo').value.trim()
+            };
+
+            if (id) {
+                const idx = events.findIndex(x => x.id === id);
+                if (idx > -1) events[idx] = newEv;
+            } else {
+                events.push(newEv);
+            }
+
+            selectedDateStr = newEv.date;
+            const dParts = newEv.date.split('-');
+            currentYear = Number(dParts[0]);
+            currentMonth = Number(dParts[1]) - 1;
+
+            closeEventModal();
+            renderAll();
+        }
+
+        function deleteCurrentEvent() {
+            const id = document.getElementById('ev-form-id').value;
+            events = events.filter(e => e.id !== id);
+            closeEventModal();
+            renderAll();
+        }
+
+        // ==================== タブ2: 独立した家計簿 (実績ベース) ====================
+        function getCategoryMeta(type, catId) {
+            const list = FINANCE_CATEGORIES[type] || FINANCE_CATEGORIES.expense;
+            return list.find(c => c.id === catId) || list[0];
+        }
+
+        function renderFinanceView() {
+            const monthPrefix = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}`;
+            document.getElementById('finance-month-title').textContent = `${currentYear}年 ${currentMonth + 1}月の家計簿`;
+
+            const monthTx = transactions
+                .filter(t => t.date.startsWith(monthPrefix))
+                .sort((a, b) => b.date.localeCompare(a.date));
+
+            let totalIncome = 0;
+            let totalExpense = 0;
+            const expenseByCat = {};
+
+            monthTx.forEach(t => {
+                const amt = Number(t.amount || 0);
+                if (t.type === 'income') {
+                    totalIncome += amt;
+                } else {
+                    totalExpense += amt;
+                    expenseByCat[t.category] = (expenseByCat[t.category] || 0) + amt;
+                }
+            });
+
+            const balance = totalIncome - totalExpense;
+            document.getElementById('finance-total-balance').textContent = (balance >= 0 ? '+' : '-') + formatYen(Math.abs(balance));
+            document.getElementById('finance-total-income').textContent = `+${formatYen(totalIncome)}`;
+            document.getElementById('finance-total-expense').textContent = `-${formatYen(totalExpense)}`;
+
+            // 費目別グラフとリスト
+            const barEl = document.getElementById('expense-color-bar');
+            const catListEl = document.getElementById('expense-category-list');
+            barEl.innerHTML = '';
+            catListEl.innerHTML = '';
+
+            if (totalExpense === 0) {
+                catListEl.innerHTML = `<p class="col-span-2 text-xs text-slate-400 text-center py-2">今月の支出記録はまだありません</p>`;
+            } else {
+                FINANCE_CATEGORIES.expense.forEach(cat => {
+                    const amt = expenseByCat[cat.id] || 0;
+                    if (amt > 0) {
+                        const pct = Math.max(2, Math.round((amt / totalExpense) * 100));
+                        const seg = document.createElement('div');
+                        seg.className = 'h-full';
+                        seg.style.width = `${pct}%`;
+                        seg.style.backgroundColor = cat.color;
+                        barEl.appendChild(seg);
+
+                        const item = document.createElement('div');
+                        item.className = 'flex items-center justify-between bg-slate-50 px-2.5 py-1.5 rounded-xl text-xs';
+                        item.innerHTML = `
+                            <div class="flex items-center gap-1.5 truncate">
+                                <span class="w-2.5 h-2.5 rounded-full shrink-0" style="background-color: ${cat.color}"></span>
+                                <span class="font-semibold text-slate-700 truncate">${cat.name}</span>
+                            </div>
+                            <span class="font-bold text-slate-800">${formatYen(amt)}</span>
+                        `;
+                        catListEl.appendChild(item);
+                    }
+                });
+            }
+
+            // 履歴リスト
+            const txListEl = document.getElementById('finance-transactions-list');
+            txListEl.innerHTML = '';
+
+            if (monthTx.length === 0) {
+                txListEl.innerHTML = `
+                    <div class="bg-white p-6 rounded-2xl text-center border border-dashed border-slate-200">
+                        <p class="text-xs text-slate-400 mb-2">まだ今月の家計簿データがありません</p>
+                        <button onclick="openFinanceModal()" class="text-xs font-bold text-emerald-600 hover:underline">+ 使った金額を記帳する</button>
+                    </div>
+                `;
+                return;
+            }
+
+            monthTx.forEach(t => {
+                const cat = getCategoryMeta(t.type, t.category);
+                const isInc = t.type === 'income';
+                const row = document.createElement('div');
+                row.onclick = () => openFinanceModal(t.id);
+                row.className = 'bg-white p-3.5 rounded-2xl border border-slate-100 flex items-center justify-between cursor-pointer hover:bg-slate-50 transition';
+                row.innerHTML = `
+                    <div class="flex items-center gap-3 min-w-0">
+                        <div class="w-10 h-10 rounded-2xl flex items-center justify-center text-white text-sm shrink-0" style="background-color: ${cat.color}">
+                            <i class="fa-solid ${cat.icon}"></i>
+                        </div>
+                        <div class="min-w-0">
+                            <div class="flex items-center gap-1.5">
+                                <span class="text-xs font-bold text-slate-800 truncate">${t.title || cat.name}</span>
+                            </div>
+                            <p class="text-[11px] text-slate-400 mt-0.5">${t.date.replace(/-/g, '/')} • ${cat.name}</p>
+                        </div>
+                    </div>
+                    <span class="text-sm font-bold ${isInc ? 'text-emerald-600' : 'text-rose-500'} shrink-0">
+                        ${isInc ? '+' : '-'}${formatYen(t.amount)}
+                    </span>
+                `;
+                txListEl.appendChild(row);
+            });
+        }
+
+        function setTransactionType(type) {
+            selectedTxType = type;
+            const expBtn = document.getElementById('tx-type-expense');
+            const incBtn = document.getElementById('tx-type-income');
+
+            if (type === 'expense') {
+                expBtn.className = 'py-2 rounded-xl bg-white text-rose-600 shadow-xs transition';
+                incBtn.className = 'py-2 rounded-xl text-slate-500 transition';
+                selectedTxCategory = FINANCE_CATEGORIES.expense[0].id;
+            } else {
+                incBtn.className = 'py-2 rounded-xl bg-white text-emerald-600 shadow-xs transition';
+                expBtn.className = 'py-2 rounded-xl text-slate-500 transition';
+                selectedTxCategory = FINANCE_CATEGORIES.income[0].id;
+            }
+            renderFinanceCategoryPicker();
+        }
+
+        function renderFinanceCategoryPicker() {
+            const container = document.getElementById('finance-category-picker');
+            container.innerHTML = '';
+            const list = FINANCE_CATEGORIES[selectedTxType];
+
+            list.forEach(cat => {
+                const isSel = cat.id === selectedTxCategory;
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.onclick = () => {
+                    selectedTxCategory = cat.id;
+                    renderFinanceCategoryPicker();
+                };
+                btn.className = `flex flex-col items-center justify-center p-2.5 rounded-2xl border text-center transition ${
+                    isSel ? 'bg-slate-900 text-white border-slate-900 shadow-sm' : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
+                }`;
+                btn.innerHTML = `
+                    <i class="fa-solid ${cat.icon} text-sm mb-1" style="color: ${isSel ? '#ffffff' : cat.color}"></i>
+                    <span class="text-[10px] font-bold truncate w-full">${cat.name}</span>
+                `;
+                container.appendChild(btn);
+            });
+        }
+
+        function openFinanceModal(editId = null) {
+            const modal = document.getElementById('finance-modal');
+            const delBtn = document.getElementById('btn-delete-finance');
+
+            if (editId) {
+                const t = transactions.find(x => x.id === editId);
+                if (!t) return;
+                document.getElementById('finance-modal-heading').textContent = '家計簿の編集';
+                document.getElementById('fin-form-id').value = t.id;
+                setTransactionType(t.type);
+                selectedTxCategory = t.category;
+                renderFinanceCategoryPicker();
+                document.getElementById('fin-form-amount').value = t.amount;
+                document.getElementById('fin-form-date').value = t.date;
+                document.getElementById('fin-form-title').value = t.title || '';
+                delBtn.classList.remove('hidden');
+            } else {
+                document.getElementById('finance-modal-heading').textContent = '使った・入った金額を記帳';
+                document.getElementById('fin-form-id').value = '';
+                setTransactionType('expense');
+                document.getElementById('fin-form-amount').value = '';
+                document.getElementById('fin-form-date').value = selectedDateStr;
+                document.getElementById('fin-form-title').value = '';
+                delBtn.classList.add('hidden');
+            }
+
+            modal.classList.remove('hidden');
+        }
+
+        function closeFinanceModal() {
+            document.getElementById('finance-modal').classList.add('hidden');
+        }
+
+        function saveTransaction(e) {
+            e.preventDefault();
+            const id = document.getElementById('fin-form-id').value;
+            const catMeta = getCategoryMeta(selectedTxType, selectedTxCategory);
+            const newTx = {
+                id: id || 'tx-' + Date.now(),
+                type: selectedTxType,
+                category: selectedTxCategory,
+                amount: Number(document.getElementById('fin-form-amount').value || 0),
+                date: document.getElementById('fin-form-date').value,
+                title: document.getElementById('fin-form-title').value.trim() || catMeta.name
+            };
+
+            if (id) {
+                const idx = transactions.findIndex(x => x.id === id);
+                if (idx > -1) transactions[idx] = newTx;
+            } else {
+                transactions.push(newTx);
+            }
+
+            closeFinanceModal();
+            renderAll();
+        }
+
+        function deleteCurrentTransaction() {
+            const id = document.getElementById('fin-form-id').value;
+            transactions = transactions.filter(t => t.id !== id);
+            closeFinanceModal();
+            renderAll();
+        }
+
+        // ==================== タブ3: メモ帳機能 ====================
+        function getNoteThemeObj(themeId) {
+            return NOTE_THEMES.find(t => t.id === themeId) || NOTE_THEMES[0];
+        }
+
+        function renderNotesView() {
+            const keyword = (document.getElementById('note-search').value || '').trim().toLowerCase();
+            const grid = document.getElementById('notes-grid');
+            grid.innerHTML = '';
+
+            const filtered = notes
+                .filter(n => !keyword || n.title.toLowerCase().includes(keyword) || n.content.toLowerCase().includes(keyword))
+                .sort((a, b) => Number(b.pinned) - Number(a.pinned));
+
+            if (filtered.length === 0) {
+                grid.innerHTML = `
+                    <div class="col-span-2 bg-white p-8 rounded-2xl text-center border border-dashed border-slate-200">
+                        <p class="text-xs text-slate-400 mb-2">メモが見つかりません</p>
+                        <button onclick="openNoteModal()" class="text-xs font-bold text-indigo-600 hover:underline">+ 新しいメモを書く</button>
+                    </div>
+                `;
+                return;
+            }
+
+            filtered.forEach(n => {
+                const th = getNoteThemeObj(n.theme);
+                const card = document.createElement('div');
+                card.onclick = () => openNoteModal(n.id);
+                card.className = `${th.bg} ${th.border} border p-3.5 rounded-2xl shadow-xs flex flex-col justify-between cursor-pointer hover:shadow-md transition active:scale-[0.98] min-h-[130px]`;
+                card.innerHTML = `
+                    <div>
+                        <div class="flex items-start justify-between gap-1 mb-1.5">
+                            <h4 class="text-xs font-bold text-slate-800 line-clamp-1">${n.title}</h4>
+                            ${n.pinned ? '<i class="fa-solid fa-thumbtack text-amber-500 text-[11px] shrink-0 mt-0.5"></i>' : ''}
+                        </div>
+                        <p class="text-[11px] text-slate-600 whitespace-pre-line line-clamp-4 leading-relaxed">${n.content}</p>
+                    </div>
+                    <div class="mt-3 pt-2 border-t border-slate-900/5 flex items-center justify-between text-[10px] text-slate-400">
+                        <span>${n.updatedAt}</span>
+                        <i class="fa-solid fa-pen-to-square"></i>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function renderNoteThemePicker() {
+            const container = document.getElementById('note-color-picker');
+            container.innerHTML = '';
+            NOTE_THEMES.forEach(t => {
+                const isSel = t.id === selectedNoteTheme;
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.onclick = () => {
+                    selectedNoteTheme = t.id;
+                    renderNoteThemePicker();
+                };
+                btn.className = `w-8 h-8 rounded-full border-2 flex items-center justify-center transition ${
+                    isSel ? 'border-slate-800 scale-110' : 'border-slate-300'
+                }`;
+                btn.style.backgroundColor = t.dot;
+                btn.innerHTML = isSel ? '<i class="fa-solid fa-check text-slate-800 text-xs"></i>' : '';
+                container.appendChild(btn);
+            });
+        }
+
+        function toggleNotePin() {
+            isNotePinned = !isNotePinned;
+            updatePinButtonUI();
+        }
+
+        function updatePinButtonUI() {
+            const btn = document.getElementById('note-pin-btn');
+            if (isNotePinned) {
+                btn.className = 'px-3 py-2.5 rounded-xl border border-amber-300 bg-amber-50 text-xs font-bold text-amber-600 flex items-center gap-1';
+            } else {
+                btn.className = 'px-3 py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-400 flex items-center gap-1';
+            }
+        }
+
+        function openNoteModal(editId = null) {
+            const modal = document.getElementById('note-modal');
+            const delBtn = document.getElementById('btn-delete-note');
+
+            if (editId) {
+                const n = notes.find(x => x.id === editId);
+                if (!n) return;
+                document.getElementById('note-modal-heading').textContent = 'メモの編集';
+                document.getElementById('note-form-id').value = n.id;
+                document.getElementById('note-form-title').value = n.title;
+                document.getElementById('note-form-content').value = n.content;
+                selectedNoteTheme = n.theme || 'white';
+                isNotePinned = Boolean(n.pinned);
+                delBtn.classList.remove('hidden');
+            } else {
+                document.getElementById('note-modal-heading').textContent = '新しいメモ';
+                document.getElementById('note-form-id').value = '';
+                document.getElementById('note-form-title').value = '';
+                document.getElementById('note-form-content').value = '';
+                selectedNoteTheme = 'amber';
+                isNotePinned = false;
+                delBtn.classList.add('hidden');
+            }
+
+            updatePinButtonUI();
+            renderNoteThemePicker();
+            modal.classList.remove('hidden');
+        }
+
+        function closeNoteModal() {
+            document.getElementById('note-modal').classList.add('hidden');
+        }
+
+        function saveNote(e) {
+            e.preventDefault();
+            const id = document.getElementById('note-form-id').value;
+            const today = new Date();
+            const dateLabel = `${today.getFullYear()}/${String(today.getMonth() + 1).padStart(2, '0')}/${String(today.getDate()).padStart(2, '0')}`;
+
+            const newNote = {
+                id: id || 'nt-' + Date.now(),
+                title: document.getElementById('note-form-title').value.trim(),
+                content: document.getElementById('note-form-content').value.trim(),
+                theme: selectedNoteTheme,
+                pinned: isNotePinned,
+                updatedAt: dateLabel
+            };
+
+            if (id) {
+                const idx = notes.findIndex(x => x.id === id);
+                if (idx > -1) notes[idx] = newNote;
+            } else {
+                notes.unshift(newNote);
+            }
+
+            closeNoteModal();
+            renderNotesView();
+        }
+
+        function deleteCurrentNote() {
+            const id = document.getElementById('note-form-id').value;
+            notes = notes.filter(n => n.id !== id);
+            closeNoteModal();
+            renderNotesView();
+        }
+
+        // ==================== タブ4: リマインダー管理 ====================
+        function renderRemindersView() {
+            const reminderEvents = events
+                .filter(e => e.reminder && e.reminder !== 'none')
+                .sort((a, b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time));
+
+            document.getElementById('reminder-active-count').textContent = `${reminderEvents.length}件`;
+            const badge = document.getElementById('nav-reminder-badge');
+            if (reminderEvents.length > 0) {
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+
+            const listEl = document.getElementById('reminders-list');
+            listEl.innerHTML = '';
+
+            if (reminderEvents.length === 0) {
+                listEl.innerHTML = `<div class="bg-white p-6 rounded-2xl text-center text-xs text-slate-400">現在リマインダー設定されている予定はありません</div>`;
+                return;
+            }
+
+            reminderEvents.forEach(ev => {
+                const card = document.createElement('div');
+                card.className = 'bg-white p-3.5 rounded-2xl border border-slate-100 flex items-center justify-between gap-3';
+                card.innerHTML = `
+                    <div onclick="openEventModal('${ev.id}')" class="flex items-center gap-3 min-w-0 flex-1 cursor-pointer">
+                        <div class="w-2.5 h-10 rounded-full shrink-0" style="background-color: ${ev.color}"></div>
+                        <div class="min-w-0">
+                            <div class="flex items-center gap-1.5">
+                                <span class="text-[11px] font-bold text-slate-500">${ev.date.replace(/-/g, '/')} ${ev.time}</span>
+                                <span class="text-[10px] font-bold bg-amber-100 text-amber-700 px-2 py-0.5 rounded-md">
+                                    <i class="fa-solid fa-bell mr-0.5"></i>${REMINDER_LABELS[ev.reminder]}
+                                </span>
+                            </div>
+                            <h4 class="text-sm font-bold text-slate-800 truncate mt-0.5">${ev.title}</h4>
+                        </div>
+                    </div>
+                    <button onclick="fireReminderToast('${ev.id}')" class="px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 text-[11px] font-semibold shrink-0">
+                        テスト通知
+                    </button>
+                `;
+                listEl.appendChild(card);
+            });
+        }
+
+        // ==================== 共通ナビゲーション＆ユーティリティ ====================
+        function changeMonth(delta) {
+            currentMonth += delta;
+            if (currentMonth < 0) {
+                currentMonth = 11;
+                currentYear--;
+            } else if (currentMonth > 11) {
+                currentMonth = 0;
+                currentYear++;
+            }
+            selectedDateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-01`;
+            renderAll();
+        }
+
+        function jumpToToday() {
+            currentYear = 2026;
+            currentMonth = 9;
+            selectedDateStr = '2026-10-25';
+            renderAll();
+        }
+
+        function switchTab(tabName) {
+            currentTab = tabName;
+            const views = ['calendar', 'finance', 'notes', 'reminders'];
+            const titles = {
+                calendar: 'スケジュール',
+                finance: '家計簿（収支管理）',
+                notes: 'メモ帳',
+                reminders: 'リマインダー通知'
+            };
+
+            views.forEach(v => {
+                const sec = document.getElementById(`view-${v}`);
+                const btn = document.getElementById(`tab-btn-${v}`);
+                if (v === tabName) {
+                    sec.classList.remove('hidden');
+                    btn.className = 'flex flex-col items-center py-1 text-indigo-600 transition relative';
+                } else {
+                    sec.classList.add('hidden');
+                    btn.className = 'flex flex-col items-center py-1 text-slate-400 hover:text-slate-600 transition relative';
+                }
+            });
+
+            // FABの色と役割をタブに合わせて変更
+            const fab = document.getElementById('fab-button');
+            if (tabName === 'finance') {
+                fab.className = 'fixed sm:absolute bottom-20 right-5 w-14 h-14 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white shadow-xl shadow-emerald-500/30 flex items-center justify-center text-xl transition transform active:scale-90 z-20';
+            } else {
+                fab.className = 'fixed sm:absolute bottom-20 right-5 w-14 h-14 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white shadow-xl shadow-indigo-500/30 flex items-center justify-center text-xl transition transform active:scale-90 z-20';
+            }
+
+            document.getElementById('header-title').textContent = titles[tabName];
+        }
+
+        function handleFabClick() {
+            if (currentTab === 'finance') {
+                openFinanceModal();
+            } else if (currentTab === 'notes') {
+                openNoteModal();
+            } else {
+                openEventModal();
+            }
+        }
+
+        // --- リマインダー通知＆サウンド機能 ---
+        function playNotificationSound() {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const now = ctx.currentTime;
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(587.33, now);
+                osc.frequency.setValueAtTime(880, now + 0.12);
+                gain.gain.setValueAtTime(0.15, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start(now);
+                osc.stop(now + 0.45);
+            } catch (e) {}
+        }
+
+        let toastTimer = null;
+        function fireReminderToast(eventId) {
+            const ev = events.find(e => e.id === eventId) || events[0];
+            if (!ev) return;
+
+            const toast = document.getElementById('reminder-toast');
+            const iconBox = document.getElementById('toast-color-icon');
+
+            iconBox.style.backgroundColor = ev.color || '#3b82f6';
+            document.getElementById('toast-time').textContent = REMINDER_LABELS[ev.reminder] || '通知';
+            document.getElementById('toast-title').textContent = ev.title;
+            document.getElementById('toast-desc').textContent = `${ev.date.slice(5).replace('-', '/')} ${ev.time} 開始 ${ev.memo ? '• ' + ev.memo : ''}`;
+
+            toast.classList.remove('hidden');
+            toast.classList.remove('toast-enter');
+            void toast.offsetWidth;
+            toast.classList.add('toast-enter');
+
+            playNotificationSound();
+
+            if (toastTimer) clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => {
+                closeToast();
+            }, 5000);
+        }
+
+        function triggerTestReminder() {
+            const target = events.find(e => e.date === selectedDateStr) || events[0];
+            if (target) fireReminderToast(target.id);
+        }
+
+        function closeToast() {
+            document.getElementById('reminder-toast').classList.add('hidden');
+        }
+
+        function startReminderWatcher() {
+            setInterval(() => {
+                const now = new Date();
+                events.forEach(ev => {
+                    if (!ev.reminder || ev.reminder === 'none') return;
+                    const evDate = new Date(`${ev.date}T${ev.time}:00`);
+                    const notifyTime = new Date(evDate.getTime() - Number(ev.reminder) * 60000);
+                    if (
+                        now.getFullYear() === notifyTime.getFullYear() &&
+                        now.getMonth() === notifyTime.getMonth() &&
+                        now.getDate() === notifyTime.getDate() &&
+                        now.getHours() === notifyTime.getHours() &&
+                        now.getMinutes() === notifyTime.getMinutes() &&
+                        now.getSeconds() < 10
+                    ) {
+                        fireReminderToast(ev.id);
+                    }
+                });
+            }, 10000);
+        }
+    </script>
 </body>
 </html>
